@@ -1,5 +1,8 @@
 ﻿#include <iostream>
 #include <cassert>
+#include <cmath>
+#include <string>
+#include <cstdlib>
 
 using namespace std;
 
@@ -7,16 +10,22 @@ struct Expression //базовая абстрактная структура
 {
 	virtual ~Expression() { } //виртуальный деструктор
 	virtual double evaluate() const = 0; //абстрактный метод «вычислить»
+	virtual Expression* transform(Transformer* tr) const = 0; //метод для двойной диспетчеризации
 };
+
 struct Number : Expression // стуктура «Число»
 {
 	Number(double value) : value_(value) {} //конструктор
 	double value() const { return value_; } // метод чтения значения числа
-	double evaluate() const { return value_; } // реализация виртуального метода «вычислить»
-		~Number() {}//деструктор, тоже виртуальный
+	double evaluate() const  override { return value_; } // реализация виртуального метода «вычислить»
+	Expression* transform(Transformer* tr) const override {
+		return tr->transformNumber(this);
+	}
+	~Number()  override {}//деструктор, тоже виртуальный
 private:
 	double value_; // само вещественное число
 };
+
 struct BinaryOperation : Expression // «Бинарная операция»
 {
 	enum { // перечислим константы, которыми зашифруем символы операций
@@ -29,7 +38,7 @@ struct BinaryOperation : Expression // «Бинарная операция»
 		BinaryOperation(Expression const* left, int op, Expression const* right): left_(left), op_(op), right_(right){
 		assert(left_ && right_);
 	}
-	~BinaryOperation() //в деструкторе освободим занятую память
+	~BinaryOperation() override//в деструкторе освободим занятую память
 	{
 		delete left_;
 		delete right_;
@@ -37,7 +46,7 @@ struct BinaryOperation : Expression // «Бинарная операция»
 	Expression const* left() const { return left_; } // чтение левого операнда
 	Expression const* right() const { return right_; } // чтение правого операнда
 		int operation() const { return op_; } // чтение символа операции
-	double evaluate() const // реализация виртуального метода «вычислить»
+	double evaluate() const override// реализация виртуального метода «вычислить»
 	{
 		double left = left_->evaluate(); // вычисляем левую часть
 		double right = right_->evaluate(); // вычисляем правую часть
@@ -49,6 +58,10 @@ struct BinaryOperation : Expression // «Бинарная операция»
 		case DIV: return left / right;
 		case MUL: return left * right;
 		}
+
+	}
+	Expression* transform(Transformer* tr) const override {
+		return tr->transformBinaryOperation(this);
 	}
 private:
 	Expression const* left_; // указатель на левый операнд
@@ -73,14 +86,17 @@ struct FunctionCall : Expression // структура «Вызов функци
 	{
 		return arg_;
 	}
-	~FunctionCall() { delete arg_; } // освобождаем память в деструкторе
-	virtual double evaluate() const { // реализация виртуального метода
+	~FunctionCall() override { delete arg_; } // освобождаем память в деструкторе
+	virtual double evaluate() const override { // реализация виртуального метода
 		//«вычислить»
 		if (name_ == "sqrt")
 			return sqrt(arg_->evaluate()); // либо вычисляем корень квадратный
 		else return fabs(arg_->evaluate());
 	} // либо модуль — остальные функции
 //запрещены
+	Expression* transform(Transformer* tr) const override {
+		return tr->transformFunctionCall(this);
+	}
 private:
 	string const name_; // имя функции
 	Expression const* arg_; // указатель на ее аргумент
@@ -90,33 +106,66 @@ struct Variable : Expression // структура «Переменная»
 	Variable(string const& name) : name_(name) { } //в конструкторе надо
 	//указать ее имя
 	string const& name() const { return name_; } // чтение имени переменной
-	double evaluate() const // реализация виртуального метода «вычислить»
+	double evaluate() const override // реализация виртуального метода «вычислить»
 	{
 		return 0.0;
+	}
+	Expression* transform(Transformer* tr) const override {
+		return tr->transformVariable(this);
 	}
 private:
 	string const name_; // имя переменной
 };
 
+// Интерфейс Transformer (паттерн Visitor)
+struct Transformer {
+	virtual ~Transformer() {}
+
+	virtual Expression* transformNumber(Number const*) = 0;
+	virtual Expression* transformBinaryOperation(BinaryOperation const*) = 0;
+	virtual Expression* transformFunctionCall(FunctionCall const*) = 0;
+	virtual Expression* transformVariable(Variable const*) = 0;
+};
+
+struct DoubleTransformer : Transformer {
+	Expression* transformNumber(Number const* num) override {
+		return new Number(num->value() * 2);
+	}
+
+	Expression* transformBinaryOperation(BinaryOperation const* bin) override {
+		Expression* newLeft = bin->left()->transform(this);
+		Expression* newRight = bin->right()->transform(this);
+		return new BinaryOperation(newLeft, bin->operation(), newRight);
+	}
+
+	Expression* transformFunctionCall(FunctionCall const* func) override {
+		Expression* newArg = func->arg()->transform(this);
+		return new FunctionCall(func->name(), newArg);
+	}
+
+	Expression* transformVariable(Variable const* var) override {
+		return new Variable(var->name()); //переменные не меняем
+	}
+};
 
 int main() {
 	setlocale(LC_ALL, "russian");
 
-	//------------------------------------------------------------------------------
-	Expression* e1 = new Number(1.234);
-	Expression* e2 = new Number(-1.234);
-	Expression* e3 = new BinaryOperation(e1, BinaryOperation::DIV, e2);
-	cout << e3->evaluate() << '\n';
-	//------------------------------------------------------------------------------
-	Expression* n32 = new Number(32.0);
-	Expression* n16 = new Number(16.0);
-	Expression* minus = new BinaryOperation(n32, BinaryOperation::MINUS, n16);
-	Expression* callSqrt = new FunctionCall("sqrt", minus);
-	Expression* n2 = new Number(2.0);
-	Expression* mult = new BinaryOperation(n2, BinaryOperation::MUL, callSqrt);
-	Expression* callAbs = new FunctionCall("abs", mult);
-	cout << callAbs->evaluate() << '\n';
-	//------------------------------------------------------------------------------
+	Expression* e = new BinaryOperation(
+		new Number(5),
+		BinaryOperation::MUL,
+		new FunctionCall("sqrt", new Number(16))
+	);
 
+	cout << "Original: " << e->evaluate() << endl;
+
+	Transformer* transformer = new DoubleTransformer();
+	Expression* transformed = e->transform(transformer);
+
+	cout << "Transformed: " << transformed->evaluate() << endl;
+
+	delete e;
+	delete transformed;
+	delete transformer;
 	return 0;
 }
