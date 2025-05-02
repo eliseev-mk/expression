@@ -99,3 +99,24 @@ private:
 };
 
 
+int main() {
+	setlocale(LC_ALL, "russian");
+
+	//------------------------------------------------------------------------------
+	Expression* e1 = new Number(1.234);
+	Expression* e2 = new Number(-1.234);
+	Expression* e3 = new BinaryOperation(e1, BinaryOperation::DIV, e2);
+	cout << e3->evaluate() << '\n';
+	//------------------------------------------------------------------------------
+	Expression* n32 = new Number(32.0);
+	Expression* n16 = new Number(16.0);
+	Expression* minus = new BinaryOperation(n32, BinaryOperation::MINUS, n16);
+	Expression* callSqrt = new FunctionCall("sqrt", minus);
+	Expression* n2 = new Number(2.0);
+	Expression* mult = new BinaryOperation(n2, BinaryOperation::MUL, callSqrt);
+	Expression* callAbs = new FunctionCall("abs", mult);
+	cout << callAbs->evaluate() << '\n';
+	//------------------------------------------------------------------------------
+
+	return 0;
+}
