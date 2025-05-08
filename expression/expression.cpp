@@ -10,7 +10,6 @@ struct Expression //базовая абстрактная структура
 {
 	virtual ~Expression() { } //виртуальный деструктор
 	virtual double evaluate() const = 0; //абстрактный метод «вычислить»
-	virtual Expression* transform(Transformer* tr) const = 0; //метод для двойной диспетчеризации
 };
 
 struct Number : Expression // стуктура «Число»
@@ -18,9 +17,6 @@ struct Number : Expression // стуктура «Число»
 	Number(double value) : value_(value) {} //конструктор
 	double value() const { return value_; } // метод чтения значения числа
 	double evaluate() const  override { return value_; } // реализация виртуального метода «вычислить»
-	Expression* transform(Transformer* tr) const override {
-		return tr->transformNumber(this);
-	}
 	~Number()  override {}//деструктор, тоже виртуальный
 private:
 	double value_; // само вещественное число
@@ -60,9 +56,7 @@ struct BinaryOperation : Expression // «Бинарная операция»
 		}
 
 	}
-	Expression* transform(Transformer* tr) const override {
-		return tr->transformBinaryOperation(this);
-	}
+
 private:
 	Expression const* left_; // указатель на левый операнд
 	Expression const* right_; // указатель на правый операнд
@@ -94,9 +88,7 @@ struct FunctionCall : Expression // структура «Вызов функци
 		else return fabs(arg_->evaluate());
 	} // либо модуль — остальные функции
 //запрещены
-	Expression* transform(Transformer* tr) const override {
-		return tr->transformFunctionCall(this);
-	}
+	
 private:
 	string const name_; // имя функции
 	Expression const* arg_; // указатель на ее аргумент
@@ -110,9 +102,7 @@ struct Variable : Expression // структура «Переменная»
 	{
 		return 0.0;
 	}
-	Expression* transform(Transformer* tr) const override {
-		return tr->transformVariable(this);
-	}
+	
 private:
 	string const name_; // имя переменной
 };
@@ -127,45 +117,21 @@ struct Transformer {
 	virtual Expression* transformVariable(Variable const*) = 0;
 };
 
-struct DoubleTransformer : Transformer {
-	Expression* transformNumber(Number const* num) override {
-		return new Number(num->value() * 2);
-	}
-
-	Expression* transformBinaryOperation(BinaryOperation const* bin) override {
-		Expression* newLeft = bin->left()->transform(this);
-		Expression* newRight = bin->right()->transform(this);
-		return new BinaryOperation(newLeft, bin->operation(), newRight);
-	}
-
-	Expression* transformFunctionCall(FunctionCall const* func) override {
-		Expression* newArg = func->arg()->transform(this);
-		return new FunctionCall(func->name(), newArg);
-	}
-
-	Expression* transformVariable(Variable const* var) override {
-		return new Variable(var->name()); //переменные не меняем
-	}
-};
 
 int main() {
 	setlocale(LC_ALL, "russian");
 
-	Expression* e = new BinaryOperation(
-		new Number(5),
-		BinaryOperation::MUL,
-		new FunctionCall("sqrt", new Number(16))
-	);
-
-	cout << "Original: " << e->evaluate() << endl;
-
-	Transformer* transformer = new DoubleTransformer();
-	Expression* transformed = e->transform(transformer);
-
-	cout << "Transformed: " << transformed->evaluate() << endl;
-
-	delete e;
-	delete transformed;
-	delete transformer;
+	Expression* e1 = new Number(1.234);
+	Expression* e2 = new Number(-1.234);
+	Expression* e3 = new BinaryOperation(e1, BinaryOperation::DIV, e2);
+	cout << e3->evaluate() << endl;
+	Expression* n32 = new Number(32.0);
+	Expression* n16 = new Number(16.0);
+	Expression* minus = new BinaryOperation(n32, BinaryOperation::MINUS, n16);
+	Expression* callSqrt = new FunctionCall("sqrt", minus);
+	Expression* n2 = new Number(2.0);
+	Expression* mult = new BinaryOperation(n2, BinaryOperation::MUL, callSqrt);
+	Expression* callAbs = new FunctionCall("abs", mult);
+	cout << callAbs->evaluate() << endl;
 	return 0;
 }
