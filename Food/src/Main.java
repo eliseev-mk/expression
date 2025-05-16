@@ -50,6 +50,31 @@ public class Main {
         MainCourse createMainCourse();
     }
 
+    // Concrete factories
+    public static class MeatDietFactory implements MealFactory {
+        @Override
+        public Soup createSoup() {
+            return new Borscht();
+        }
+
+        @Override
+        public MainCourse createMainCourse() {
+            return new Cutlet();
+        }
+    }
+
+    public static class VeggieDietFactory implements MealFactory {
+        @Override
+        public Soup createSoup() {
+            return new PumpkinSoup();
+        }
+
+        @Override
+        public MainCourse createMainCourse() {
+            return new FriedPotatoes();
+        }
+    }
+
     public static void main(String[] args) {
         System.out.println("Hello world!");
     }
