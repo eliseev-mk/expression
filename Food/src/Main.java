@@ -44,6 +44,12 @@ public class Main {
         }
     }
 
+    // Abstract factory
+    public interface MealFactory {
+        Soup createSoup();
+        MainCourse createMainCourse();
+    }
+
     public static void main(String[] args) {
         System.out.println("Hello world!");
     }
