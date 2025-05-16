@@ -10,9 +10,24 @@ public class Main {
         public abstract String getDescription();
     }
 
-    // Desert
+    // Desert (abstract product)
     public static abstract class Dessert {
         public abstract String getDescription();
+    }
+
+    // Concrete classes
+    public static class Borscht extends Soup {
+        @Override
+        public String getDescription() {
+            return "Борщ";
+        }
+    }
+
+    public static class PumpkinSoup extends Soup {
+        @Override
+        public String getDescription() {
+            return "Тыквенный суп";
+        }
     }
 
     public static void main(String[] args) {
