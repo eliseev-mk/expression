@@ -19,14 +19,28 @@ public class Main {
     public static class Borscht extends Soup {
         @Override
         public String getDescription() {
-            return "Борщ";
+            return "Borscht";
         }
     }
 
     public static class PumpkinSoup extends Soup {
         @Override
         public String getDescription() {
-            return "Тыквенный суп";
+            return "PumpkinSoup";
+        }
+    }
+
+    public static class FriedPotatoes extends MainCourse {
+        @Override
+        public String getDescription() {
+            return "FriedPotatoes";
+        }
+    }
+
+    public static class Cutlet extends MainCourse {
+        @Override
+        public String getDescription() {
+            return "Cutlet";
         }
     }
 
