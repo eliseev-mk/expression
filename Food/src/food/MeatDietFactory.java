@@ -11,4 +11,8 @@ public class MeatDietFactory implements MealFactory {
     public MainCourse createMainCourse() {
         return new Cutlet();
     }
+
+    public Dessert createDessert() {
+        return new ChocolateCake();
+    }
 }

@@ -10,4 +10,8 @@ public class VeggieDietFactory implements MealFactory {
     public MainCourse createMainCourse() {
         return new FriedPotatoes();
     }
+
+    public Dessert createDessert() {
+        return new Croissant();
+    }
 }

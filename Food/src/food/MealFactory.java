@@ -4,4 +4,5 @@ package food;
 public interface MealFactory {
     Soup createSoup();
     MainCourse createMainCourse();
+    Dessert createDessert();
 }
