@@ -11,5 +11,10 @@ public class Main {
         MealFactory veggieFactory = new VeggieDietFactory();
         Lunch veggieDiet = new Lunch(veggieFactory);
         veggieDiet.showMenu();
+
+        System.out.println("\n===Kefir Diet===");
+        MealFactory kefirFactory = new KefirDietFactory();
+        Lunch kefirDiet = new Lunch(kefirFactory);
+        kefirDiet.showMenu();
     }
 }
