@@ -75,7 +75,30 @@ public class Main {
         }
     }
 
+    public static class Lunch {
+        private final Soup soup;
+        private final MainCourse mainCourse;
+
+        public Lunch(MealFactory factory) {
+            this.soup = factory.createSoup();
+            this.mainCourse = factory.createMainCourse();
+        }
+
+        public void showMenu() {
+            System.out.println("Soup: " + soup.getDescription());
+            System.out.println("Main course: " + mainCourse.getDescription());
+        }
+    }
+
     public static void main(String[] args) {
-        System.out.println("Hello world!");
+        System.out.println("===Meat Diet===");
+        MealFactory meatFactory = new MeatDietFactory();
+        Lunch meatDiet = new Lunch(meatFactory);
+        meatDiet.showMenu();
+
+        System.out.println("\n===Veggie Diet===");
+        MealFactory veggieFactory = new VeggieDietFactory();
+        Lunch veggieDiet = new Lunch(veggieFactory);
+        veggieDiet.showMenu();
     }
 }
